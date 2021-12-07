@@ -13,11 +13,11 @@ import java.util.prefs.Preferences;
  * memory and writes it to user preferences between app loads. This implementation is
  * intentionally a little hard to use in unit tests, so watch out!
  */
-public class PretendDatabaseSecurityRepositoryImpl implements com.udacity.catpoint.security.data.SecurityRepository {
+public class PretendDatabaseSecurityRepositoryImpl implements SecurityRepository {
 
-    private Set<com.udacity.catpoint.security.data.Sensor> sensors;
-    private com.udacity.catpoint.security.data.AlarmStatus alarmStatus;
-    private com.udacity.catpoint.security.data.ArmingStatus armingStatus;
+    private Set<Sensor> sensors;
+    private AlarmStatus alarmStatus;
+    private ArmingStatus armingStatus;
 
     //preference keys
     private static final String SENSORS = "SENSORS";
@@ -29,8 +29,8 @@ public class PretendDatabaseSecurityRepositoryImpl implements com.udacity.catpoi
 
     public PretendDatabaseSecurityRepositoryImpl() {
         //load system state from prefs, or else default
-        alarmStatus = com.udacity.catpoint.security.data.AlarmStatus.valueOf(prefs.get(ALARM_STATUS, com.udacity.catpoint.security.data.AlarmStatus.NO_ALARM.toString()));
-        armingStatus = com.udacity.catpoint.security.data.ArmingStatus.valueOf(prefs.get(ARMING_STATUS, com.udacity.catpoint.security.data.ArmingStatus.DISARMED.toString()));
+        alarmStatus = AlarmStatus.valueOf(prefs.get(ALARM_STATUS, AlarmStatus.NO_ALARM.toString()));
+        armingStatus = ArmingStatus.valueOf(prefs.get(ARMING_STATUS, ArmingStatus.DISARMED.toString()));
 
         //we've serialized our sensor objects for storage, which should be a good warning sign that
         // this is likely an impractical solution for a real system
@@ -38,55 +38,55 @@ public class PretendDatabaseSecurityRepositoryImpl implements com.udacity.catpoi
         if(sensorString == null) {
             sensors = new TreeSet<>();
         } else {
-            Type type = new TypeToken<Set<com.udacity.catpoint.security.data.Sensor>>() {
+            Type type = new TypeToken<Set<Sensor>>() {
             }.getType();
             sensors = gson.fromJson(sensorString, type);
         }
     }
 
     @Override
-    public void addSensor(com.udacity.catpoint.security.data.Sensor sensor) {
+    public void addSensor(Sensor sensor) {
         sensors.add(sensor);
         prefs.put(SENSORS, gson.toJson(sensors));
     }
 
     @Override
-    public void removeSensor(com.udacity.catpoint.security.data.Sensor sensor) {
+    public void removeSensor(Sensor sensor) {
         sensors.remove(sensor);
         prefs.put(SENSORS, gson.toJson(sensors));
     }
 
     @Override
-    public void updateSensor(com.udacity.catpoint.security.data.Sensor sensor) {
+    public void updateSensor(Sensor sensor) {
         sensors.remove(sensor);
         sensors.add(sensor);
         prefs.put(SENSORS, gson.toJson(sensors));
     }
 
     @Override
-    public void setAlarmStatus(com.udacity.catpoint.security.data.AlarmStatus alarmStatus) {
+    public void setAlarmStatus(AlarmStatus alarmStatus) {
         this.alarmStatus = alarmStatus;
         prefs.put(ALARM_STATUS, this.alarmStatus.toString());
     }
 
     @Override
-    public void setArmingStatus(com.udacity.catpoint.security.data.ArmingStatus armingStatus) {
+    public void setArmingStatus(ArmingStatus armingStatus) {
         this.armingStatus = armingStatus;
         prefs.put(ARMING_STATUS, this.armingStatus.toString());
     }
 
     @Override
-    public Set<com.udacity.catpoint.security.data.Sensor> getSensors() {
+    public Set<Sensor> getSensors() {
         return sensors;
     }
 
     @Override
-    public com.udacity.catpoint.security.data.AlarmStatus getAlarmStatus() {
+    public AlarmStatus getAlarmStatus() {
         return alarmStatus;
     }
 
     @Override
-    public com.udacity.catpoint.security.data.ArmingStatus getArmingStatus() {
+    public ArmingStatus getArmingStatus() {
         return armingStatus;
     }
 }
