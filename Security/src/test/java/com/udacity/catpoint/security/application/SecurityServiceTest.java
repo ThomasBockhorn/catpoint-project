@@ -19,8 +19,8 @@ import org.mockito.quality.Strictness;
 import java.awt.image.BufferedImage;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
-public class SecurityTest {
+@MockitoSettings(strictness = Strictness.STRICT_STUBS)
+public class SecurityServiceTest {
 
     private  SecurityService securityService;
     private  Sensor sensor;
@@ -41,7 +41,7 @@ public class SecurityTest {
         securityService.addSensor(sensor);
     }
 
-   @Test
+    @Test
     public void checking_to_see_if_alarm_is_armed_alarm_status_is_pending(){
         securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
         Mockito.when(securityService.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
@@ -95,11 +95,11 @@ public class SecurityTest {
 
     @Test
     public void checking_to_see_if_image_service_identifies_cat_and_system_goes_to_alarm_status(){
-       securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
-       Mockito.when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
-       Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(true);
-       securityService.processImage(Mockito.mock(BufferedImage.class));
-       Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(AlarmStatus.ALARM);
+        securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
+        Mockito.when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
+        Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(true);
+        securityService.processImage(Mockito.mock(BufferedImage.class));
+        Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(AlarmStatus.ALARM);
     }
 
     @Test
