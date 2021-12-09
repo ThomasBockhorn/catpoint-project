@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,7 +26,7 @@ public class SecurityTest {
     private  Sensor sensor;
 
     @Mock
-    private  PretendDatabaseSecurityRepositoryImpl securityRepository;
+    private  SecurityRepository securityRepository;
 
     @Mock
     private  FakeImageService imageService;
@@ -104,7 +105,7 @@ public class SecurityTest {
     @Test
     public void checking_to_see_if_cat_not_detected_change_status_to_no_alarm_as_long_as_sensor_inactive(){
         Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(false);
-        sensor.setActive(false);
+        Mockito.when(imageService.imageContainsCat(Mockito.any(), ArgumentMatchers.anyFloat())).thenReturn(false);
         BufferedImage currentCameraImage = new BufferedImage(240, 240, BufferedImage.TYPE_INT_ARGB);
         securityService.processImage(currentCameraImage);
         Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -117,7 +118,7 @@ public class SecurityTest {
     }
 
     @Test
-    public void checking_to_see_if_system_is_armed_all_sensors_are_reset_to_inactive(){
+    public void checking_to_see_if_armed_all_sensors_are_inactive(){
         securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
         securityService.getSensors().forEach(sensor -> {
             assert Boolean.FALSE.equals(sensor.getActive());
@@ -127,9 +128,11 @@ public class SecurityTest {
     @Test
     public void checking_to_see_if_system_is_armed_and_cat_is_detected_alarm_status_set_to_alarm(){
         securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
-        Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(true);
+        Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat()))
+                .thenReturn(Boolean.TRUE);
         securityService.processImage(Mockito.mock(BufferedImage.class));
         Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(Mockito.any(AlarmStatus.class));
+
     }
 
     @Test
@@ -163,5 +166,4 @@ public class SecurityTest {
         securityService.addSensor(sensor);
         securityRepository.updateSensor(sensor);
     }
-
 }
