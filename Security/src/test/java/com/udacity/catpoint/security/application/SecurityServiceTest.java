@@ -23,10 +23,12 @@ import java.awt.image.BufferedImage;
 public class SecurityServiceTest {
 
     private  SecurityService securityService;
+
+    @Mock
     private  Sensor sensor;
 
     @Mock
-    private  SecurityRepository securityRepository;
+    private  PretendDatabaseSecurityRepositoryImpl securityRepository;
 
     @Mock
     private  FakeImageService imageService;
@@ -165,5 +167,47 @@ public class SecurityServiceTest {
     public void test_to_see_if_sensor_can_be_updated(){
         securityService.addSensor(sensor);
         securityRepository.updateSensor(sensor);
+    }
+
+    @Test
+    public void if_camera_image_does_not_contain_cat_and_sensors_are_not_active_change_status_to_no_alarm(){
+        securityService.changeSensorActivationStatus(sensor, false);
+        Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(false);
+        securityService.processImage(Mockito.mock(BufferedImage.class));
+        Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArmingStatus.class)
+    public void if_the_system_is_armed_reset_all_sensors_to_inactive(ArmingStatus armingStatus){
+        securityService.setArmingStatus(armingStatus);
+        sensor.setActive(false);
+        securityService.getSensors().forEach(sensor -> {
+            assert Boolean.FALSE.equals(sensor.getActive());
+        });
+    }
+
+    @Test
+    public void check_to_see_if_handSensor_is_activated_when_repository_is_disarmed_and_alarm_should_trigger_handle_sensor_to_deactivate(){
+        securityRepository.setArmingStatus(ArmingStatus.DISARMED);
+        Mockito.when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
+        sensor.setActive(true);
+        securityService.changeSensorActivationStatus(sensor, false);
+    }
+
+    @Test
+    public void check_to_see_if_hand_sensor_is_active_and_when_respository_is_disarmed_and_no_alarm_should_trigger_handleSensor_activated(){
+        Mockito.when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
+        Mockito.when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
+        sensor.setActive(false);
+        securityService.changeSensorActivationStatus(sensor, true);
+    }
+
+    @Test
+    public void check_to_see_system_is_armed_while_cat_is_detected_set_alarm_status_to_alarm(){
+        securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
+        Mockito.when(imageService.imageContainsCat(Mockito.any(), Mockito.anyFloat())).thenReturn(true);
+        securityService.processImage(Mockito.mock(BufferedImage.class));
+        Mockito.verify(securityRepository, Mockito.times(1)).setAlarmStatus(Mockito.any(AlarmStatus.class));
     }
 }
