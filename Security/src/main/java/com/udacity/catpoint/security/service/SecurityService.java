@@ -10,6 +10,7 @@ import com.udacity.catpoint.security.data.Sensor;
 import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Service that receives information about changes to the security system. Responsible for
@@ -44,14 +45,15 @@ public class SecurityService {
             case ARMED_HOME, ARMED_AWAY -> {
                 if(catDetect){
                     setAlarmStatus(AlarmStatus.ALARM);
-                    break;
                 }
-
+                ConcurrentSkipListSet<Sensor> sensors = new ConcurrentSkipListSet<>(getSensors());
+                sensors.forEach(sensor -> changeSensorActivationStatus(sensor, false));
+                break;
             }
         }
 
         securityRepository.setArmingStatus(armingStatus);
-        statusListeners.forEach(StatusListener::sensorStatusChanged);
+        statusListeners.forEach(statusListener -> statusListener.sensorStatusChanged());
     }
 
 
@@ -65,7 +67,7 @@ public class SecurityService {
 
         if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
             setAlarmStatus(AlarmStatus.ALARM);
-        } else if(getAllSensorsState(false)){
+        } else if(!cat && getAllSensorsState(false)){
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
         statusListeners.forEach(sl -> sl.catDetected(cat));
@@ -100,7 +102,7 @@ public class SecurityService {
      * Internal method for updating the alarm status when a sensor has been activated.
      */
     private void handleSensorActivated() {
-        if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
+        if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED || securityRepository.getAlarmStatus() == AlarmStatus.ALARM) {
             return; //no problem if the system is disarmed
         }
         switch(securityRepository.getAlarmStatus()) {
@@ -138,7 +140,7 @@ public class SecurityService {
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
-       AlarmStatus alarmStatus = securityRepository.getAlarmStatus();
+      AlarmStatus alarmStatus = securityRepository.getAlarmStatus();
 
        if(alarmStatus != AlarmStatus.ALARM){
            if(active){

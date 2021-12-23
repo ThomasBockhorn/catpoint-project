@@ -87,6 +87,6 @@ public class ImagePanel extends JPanel implements StatusListener {
 
     @Override
     public void sensorStatusChanged() {
-        //no behavior necessary
+        //No behavior necessary
     }
 }
