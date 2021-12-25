@@ -65,7 +65,7 @@ public class SecurityService {
     private void catDetected(Boolean cat) {
         catDetect = cat;
 
-        if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
+        if((cat && getArmingStatus() == ArmingStatus.ARMED_HOME) || (cat && getArmingStatus() == ArmingStatus.ARMED_AWAY)){
             setAlarmStatus(AlarmStatus.ALARM);
         } else if(!cat && getAllSensorsState(false)){
             setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -140,15 +140,13 @@ public class SecurityService {
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
-      AlarmStatus alarmStatus = securityRepository.getAlarmStatus();
-
-       if(alarmStatus != AlarmStatus.ALARM){
-           if(active){
-               handleSensorActivated();
-           }else if(sensor.getActive()){
-               handleSensorDeactivated();
-           }
-       }
+        if(!sensor.getActive() && active) {
+            handleSensorActivated();
+        } else if (sensor.getActive() && !active) {
+            handleSensorDeactivated();
+        } else if (sensor.getActive() || active){
+            handleSensorDeactivated();
+        }
 
         sensor.setActive(active);
         securityRepository.updateSensor(sensor);
